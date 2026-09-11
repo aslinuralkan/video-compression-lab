@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Compression Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">LOCAL · CPU ONLY · LIBX264</p>
+        <h1>Video Compression Lab</h1>
+        <p class="subtitle">Bir videoyu güvenli biçimde diske aktarın, parametreleri deneyin ve boyut ile kalite sonuçlarını yan yana görün.</p>
+      </div>
+      <div id="systemBadge" class="system-badge checking"><span></span>Sistem kontrol ediliyor</div>
+    </header>
+
+    <div id="systemMessage" class="notice hidden" role="status"></div>
+    <div id="errorMessage" class="notice danger hidden" role="alert"></div>
+
+    <section class="panel controls-panel" aria-labelledby="settingsTitle">
+      <div class="section-heading">
+        <div><span class="step">01</span><h2 id="settingsTitle">Kaynak ve ayarlar</h2></div>
+        <p>Varsayılan profil: 720p · 30 FPS · CRF 23 · ultrafast</p>
+      </div>
+
+      <label class="dropzone" id="dropzone">
+        <input id="fileInput" type="file" accept="video/*,.mkv,.mov,.avi,.webm,.m4v" required>
+        <span class="file-icon">＋</span>
+        <span class="file-primary" id="filePrimary">Video seçin veya buraya sürükleyin</span>
+        <span class="file-secondary" id="fileSecondary">Dosya belleğe alınmadan doğrudan diske aktarılır · 4 GB destekli</span>
+      </label>
+
+      <form id="compressionForm">
+        <div class="control-grid">
+          <label class="field">
+            <span>CRF <output id="crfOutput">23</output></span>
+            <input id="crf" name="crf" type="range" min="18" max="30" value="23">
+            <small>18 daha kaliteli / büyük · 30 daha küçük</small>
+          </label>
+
+          <label class="field">
+            <span>Preset</span>
+            <select id="preset" name="preset">
+              <option selected>ultrafast</option><option>superfast</option><option>veryfast</option>
+              <option>faster</option><option>fast</option><option>medium</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Paralel encode</span>
+            <select id="parallelism" name="parallelism">
+              <option value="auto" selected>Akıllı otomatik (önerilen)</option>
+              <option value="1">Tek süreç</option>
+              <option value="2">2 worker</option>
+              <option value="3">3 worker</option>
+              <option value="4">4 worker</option>
+            </select>
+            <small>CPU, süre, çözünürlük, FPS ve dosya boyutuna göre 1–4 worker seçer</small>
+          </label>
+
+          <label class="field">
+            <span>Maksimum çözünürlük</span>
+            <select id="resolution" name="resolution">
+              <option value="source">Kaynağı koru</option>
+              <option value="1080">1080p</option>
+              <option value="720" selected>720p</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Maksimum FPS</span>
+            <select id="maxFps" name="maxFps">
+              <option value="source">Kaynağı koru</option>
+              <option value="30" selected>30 FPS</option>
+              <option value="25">25 FPS</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Ses bitrate</span>
+            <select id="audioBitrate" name="audioBitrate">
+              <option>64k</option><option selected>96k</option><option>128k</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Kalite ölçümü</span>
+            <select id="qualityMode" name="qualityMode">
+              <option value="sample" selected>Hızlı örnekleme</option>
+              <option value="full">Tam video</option>
+              <option value="off">Kapalı</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="startButton" class="button primary" type="submit">Sıkıştırmayı Başlat</button>
+          <button id="cancelButton" class="button secondary" type="button" disabled>İptal Et</button>
+          <a id="downloadButton" class="button success disabled" aria-disabled="true">Sıkıştırılmış Videoyu İndir</a>
+          <button id="clearButton" class="button ghost" type="button" disabled>Sonucu Temizle</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="progressPanel" class="panel hidden" aria-labelledby="progressTitle">
+      <div class="section-heading">
+        <div><span class="step">02</span><h2 id="progressTitle">İşlem durumu</h2></div>
+        <div class="timer"><span id="elapsed">00:00</span><small>geçen süre</small></div>
+      </div>
+      <div class="stage-line"><span class="pulse"></span><strong id="currentStage">Hazırlanıyor</strong><span id="speed">—</span></div>
+      <div class="progress-list">
+        <div class="progress-row"><div><span>Upload</span><b id="uploadValue">0%</b></div><progress id="uploadProgress" max="100" value="0"></progress></div>
+        <div class="progress-row"><div><span>Sıkıştırma</span><b id="encodeValue">0%</b></div><progress id="encodeProgress" max="100" value="0"></progress></div>
+        <div class="progress-row"><div><span>Kalite analizi</span><b id="qualityValue">0%</b></div><progress id="qualityProgress" max="100" value="0"></progress></div>
+      </div>
+    </section>
+
+    <section id="resultPanel" class="panel hidden" aria-labelledby="resultTitle">
+      <div class="section-heading">
+        <div><span class="step">03</span><h2 id="resultTitle">Sonuç</h2></div>
+        <p id="resultSummary"></p>
+      </div>
+      <div id="resultWarnings"></div>
+      <div class="headline-metrics" id="headlineMetrics"></div>
+      <h3>Teknik karşılaştırma</h3>
+      <div class="comparison" id="comparison"></div>
+      <div class="detail-grid" id="detailMetrics"></div>
+      <div id="qualityResult"></div>
+      <details class="command-box">
+        <summary>Kullanılan gerçek FFmpeg komutları</summary>
+        <code id="command"></code>
+      </details>
+    </section>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

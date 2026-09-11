@@ -1,0 +1,16 @@
+{
+  "name": "video-compression-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local, CPU-only FFmpeg video compression laboratory",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js",
+    "test:e2e": "node --test test/e2e.test.js",
+    "benchmark": "node scripts/benchmark.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
